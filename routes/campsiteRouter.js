@@ -200,7 +200,9 @@ campsiteRouter
     Campsite.findById(req.params.campsiteId)
       .then((campsite) => {
         // Check if the same author._id
-        if (campsite.comments[0].author.equals(req.user._id)) {
+        if (
+          campsite.comments.id(req.params.commentId).author.equals(req.user._id)
+        ) {
           // If yes
           if (campsite && campsite.comments.id(req.params.commentId)) {
             if (req.body.rating) {
@@ -240,7 +242,9 @@ campsiteRouter
     Campsite.findById(req.params.campsiteId)
       .then((campsite) => {
         // Check if the same author._id
-        if (campsite.comments[0].author.equals(req.user._id)) {
+        if (
+          campsite.comments.id(req.params.commentId).author.equals(req.user._id)
+        ) {
           // If yes
           if (campsite && campsite.comments.id(req.params.commentId)) {
             campsite.comments.id(req.params.commentId).remove();
