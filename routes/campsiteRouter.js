@@ -207,10 +207,12 @@ campsiteRouter
     Campsite.findById(req.params.campsiteId)
       .populate("comments.author")
       .then((campsite) => {
-        if (campsite && campsite.comments.id(req.params.commentId)) {
+        const requestedComment = campsite.comments.id(req.params.commentId);
+
+        if (campsite && requestedComment) {
           res.statusCode = 200;
           res.setHeader("Content-Type", "application/json");
-          res.json(campsite.comments.id(req.params.commentId));
+          res.json(requestedComment);
         } else if (!campsite) {
           err = new Error(`Campsite ${req.params.campsiteId} not found`);
           err.status = 404;
@@ -237,18 +239,17 @@ campsiteRouter
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Campsite.findById(req.params.campsiteId)
       .then((campsite) => {
+        const requestedComment = campsite.comments.id(req.params.commentId);
+
         // Check if the same author._id
-        if (
-          campsite.comments.id(req.params.commentId).author.equals(req.user._id)
-        ) {
+        if (requestedComment.author._id.equals(req.user._id)) {
           // If yes
-          if (campsite && campsite.comments.id(req.params.commentId)) {
+          if (campsite && requestedComment) {
             if (req.body.rating) {
-              campsite.comments.id(req.params.commentId).rating =
-                req.body.rating;
+              requestedComment.rating = req.body.rating;
             }
             if (req.body.text) {
-              campsite.comments.id(req.params.commentId).text = req.body.text;
+              requestedComment.text = req.body.text;
             }
             campsite
               .save()
@@ -279,13 +280,13 @@ campsiteRouter
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Campsite.findById(req.params.campsiteId)
       .then((campsite) => {
+        const requestedComment = campsite.comments.id(req.params.commentId);
+
         // Check if the same author._id
-        if (
-          campsite.comments.id(req.params.commentId).author.equals(req.user._id)
-        ) {
+        if (requestedComment.author.equals(req.user._id)) {
           // If yes
-          if (campsite && campsite.comments.id(req.params.commentId)) {
-            campsite.comments.id(req.params.commentId).remove();
+          if (campsite && requestedComment) {
+            requestedComment.remove();
             campsite
               .save()
               .then((campsite) => {
