@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const Favorite = require("../models/favorite");
 const authenticate = require("../authenticate");
 const cors = require("./cors");
-const mongoose = require("mongoose");
 
 const favoriteRouter = express.Router();
 
@@ -50,27 +49,27 @@ favoriteRouter
           const strRequestedCampsites = requestedCampsites.map((item) =>
             item._id.toString()
           );
-          let originalCampsiteArr = favorite.campsites.map((item) =>
+          const originalCampsites = favorite.campsites.map((item) =>
             item.toString()
           );
           // End: Convert ObjectId arrays to string arrays
 
           // Merge string arrays
-          originalCampsiteArr = [
-            ...originalCampsiteArr,
+          let updatedCampsites = [
+            ...originalCampsites,
             ...strRequestedCampsites,
           ];
 
           // Remove duplicate array elements
-          originalCampsiteArr = originalCampsiteArr.filter(
-            (item, index) => originalCampsiteArr.indexOf(item) === index
+          updatedCampsites = updatedCampsites.filter(
+            (item, index) => updatedCampsites.indexOf(item) === index
           );
-          originalCampsiteArr.sort(); // Sorting to beautify
+          updatedCampsites.sort(); // sorts for beautification
 
           // Update favorite.campsites
-          favorite.campsites = originalCampsiteArr;
+          favorite.campsites = updatedCampsites;
 
-          console.log("\nfavorite updated: ", JSON.stringify(favorite));
+          console.log("favorite updated: ", JSON.stringify(favorite));
 
           favorite
             .save()
@@ -105,22 +104,17 @@ favoriteRouter
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
   .get(cors.cors, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
-    res.end("GET operation not supported on /favorites");
+    res.end(
+      `GET operation not supported on /favorites/${req.params.campsiteId}`
+    );
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     const requestedUserID = req.user._id;
 
-    // You will add the campsite specified in the URL parameter
-    // to the list of the user's list of favorite campsites, if the
-    // campsite is not already in the list of favorites.
-    // If the campsite is already in the list, then respond with
-    // a message saying "That campsite is already in the list of favorites!"
-    // If the user has not previously defined any favorites, then
-    // you will need to create a new Favorite document for this user.
     Favorite.findOne({ user: requestedUserID })
       .then((favorite) => {
         if (!favorite) {
-          // If empty
+          // If 'favorite' is an empty document
           req.body.user = requestedUserID; // Add a field for user: ObjectId to the req.body
           req.body.campsites = req.params.campsiteId;
           Favorite.create(req.body);
@@ -130,9 +124,7 @@ favoriteRouter
         } else if (favorite.campsites.includes(req.params.campsiteId)) {
           // If that campiste already exists
           res.statusCode = 403;
-          res.end(
-            `<h1>That campsite is already in the list of favorites!</h1>`
-          );
+          res.end(`That campsite is already in the list of favorites!`);
         } else {
           // If that campiste doesn't exist while there exists favorite.campsites
           favorite.campsites.push(req.params.campsiteId);
@@ -149,7 +141,9 @@ favoriteRouter
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
-    res.end("PUT operation not supported on /favorites");
+    res.end(
+      `PUT operation not supported on /favorites/${req.params.campsiteId}`
+    );
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     const requestedUserID = req.user._id;
